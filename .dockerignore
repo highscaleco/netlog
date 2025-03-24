@@ -1,0 +1,7 @@
+.vscode
+.air.toml
+.go.sum
+vendor
+tmp
+.env*
+README.md
