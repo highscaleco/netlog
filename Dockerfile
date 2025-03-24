@@ -6,7 +6,7 @@ ENV GOOS=linux
 WORKDIR /
 COPY . .
 ENV GOPROXY=http://registry.ik8s.ir/repository/golang.org/
-RUN go get -d && go mod download && go build -a -ldflags "-s -w" -installsuffix cgo -o netlog ./cmd/netlog
+RUN go get -d && go mod download && go build -a -ldflags "-s -w" -installsuffix cgo -o netlog ./cmd/netlog/main.go
 
 FROM docker.arvancloud.ir/alpine:latest
 RUN apk --no-cache add ca-certificates
