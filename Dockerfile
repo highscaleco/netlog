@@ -1,4 +1,4 @@
-FROM docker.arvancloud.ir/golang:latest AS builder
+FROM docker.arvancloud.ir/golang:alpine AS builder
 RUN apk add libpcap
 ENV HOME=/
 ENV CGO_ENABLED=0
