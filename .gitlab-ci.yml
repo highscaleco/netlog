@@ -18,7 +18,7 @@ unit-tests:
   cache:
     paths:
       - node_modules
-  image: golang:latest
+  image: golang:alpine
   before_script:
     - apk add libpcap
   script:
