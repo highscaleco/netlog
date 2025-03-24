@@ -21,6 +21,7 @@ unit-tests:
   image: golang:alpine
   before_script:
     - apk add libpcap
+    - CGO_ENABLED=1
   script:
     - go test -race -coverprofile=coverage.out.tmp ./...
     - cat coverage.out.tmp | grep -v "fake_" > coverage.out
