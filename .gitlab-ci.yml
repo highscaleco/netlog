@@ -19,6 +19,8 @@ unit-tests:
     paths:
       - node_modules
   image: golang:latest
+  before_script:
+    - apk add libpcap
   script:
     - go test -race -coverprofile=coverage.out.tmp ./...
     - cat coverage.out.tmp | grep -v "fake_" > coverage.out

@@ -1,5 +1,5 @@
 FROM docker.arvancloud.ir/golang:latest AS builder
-RUN apk add libpcap-dev
+RUN apk add libpcap
 ENV HOME=/
 ENV CGO_ENABLED=0
 ENV GOOS=linux
