@@ -1,31 +1,7 @@
-# Git
-.git
-.gitignore
-
-# IDE
-.idea
 .vscode
-
-# Build output
-netlog
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Test files
-*.test
-*.out
-
-# Docker
-Dockerfile
-.dockerignore
-
-# Documentation
+.air.toml
+.go.sum
+vendor
+tmp
+.env*
 README.md
-LICENSE
-
-# Misc
-.DS_Store
-*.log 

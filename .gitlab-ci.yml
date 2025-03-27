@@ -1,0 +1,72 @@
+default:
+  image: docker
+  services:
+    - name: docker:dind
+      command: ["--tls=false"]
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
+  GOPROXY: https://registry.ik8s.ir/repository/golang.org/
+
+stages:
+  - test
+  - build
+  - update
+
+unit-tests:
+  stage: test
+  cache:
+    paths:
+      - node_modules
+  image: golang:alpine
+  before_script:
+    - apk add libpcap-dev gcc libc-dev
+  script:
+    - CGO_ENABLED=1 go test -race -coverprofile=coverage.out.tmp ./...
+    - cat coverage.out.tmp | grep -v "fake_" > coverage.out
+    - go tool cover -func=coverage.out
+  coverage: '/total:\s+\(statements\)\s+(\d+.\d+\%)/'    
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+  tags:
+    - gitops-runner
+
+build-docker-image:
+  stage: build
+  script:
+    - echo $CI_REGISTRY
+    - docker build -t $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_TAG .
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - docker image push $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_TAG
+  only:
+    - /^v[0-9]+(\.[0-9]+){0,2}(-rc\.[0-9]+)?$/
+  tags:
+    - gitops-runner
+
+release-candidate-gitops:
+  stage: update
+  variables:
+    GITOPS_CI_IMAGE_NAMESPACE: "$CI_PROJECT_NAMESPACE"
+    GITOPS_CI_IMAGE_NAME: "$CI_PROJECT_NAME"
+    GITOPS_CI_IMAGE_TAG: "$CI_COMMIT_TAG"
+    GITOPS_CI_ZONE: "compute"
+    GITOPS_CI_TRIGGER: "true"
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+(?:\.[0-9]+)+-rc\.[0-9]+$/'
+  trigger:
+    project: novincloud/gitops
+    branch: staging
+
+production-gitops:
+  stage: update
+  variables:
+    GITOPS_CI_IMAGE_NAMESPACE: "$CI_PROJECT_NAMESPACE"
+    GITOPS_CI_IMAGE_NAME: "$CI_PROJECT_NAME"
+    GITOPS_CI_IMAGE_TAG: "$CI_COMMIT_TAG"
+    GITOPS_CI_ZONE: "compute"
+    GITOPS_CI_TRIGGER: "true"
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+(\.[0-9]+){0,2}$/'
+  trigger:
+    project: novincloud/gitops
+    branch: main
