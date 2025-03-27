@@ -123,4 +123,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - [gopacket](https://github.com/google/gopacket) for packet capture functionality
-- [libpcap](https://www.tcpdump.org/) for the underlying packet capture library 
+- [libpcap](https://www.tcpdump.org/) for the underlying packet capture library
