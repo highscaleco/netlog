@@ -174,23 +174,23 @@ func (c *Capture) Stop() {
 }
 
 // processPacket extracts relevant information from a packet
-func (c *Capture) processPacket(packet gopacket.Packet) (PacketInfo, error) {
-	networkLayer := packet.NetworkLayer()
-	if networkLayer == nil {
-		return PacketInfo{}, fmt.Errorf("no network layer found")
-	}
+// func (c *Capture) processPacket(packet gopacket.Packet) (PacketInfo, error) {
+// 	networkLayer := packet.NetworkLayer()
+// 	if networkLayer == nil {
+// 		return PacketInfo{}, fmt.Errorf("no network layer found")
+// 	}
 
-	transportLayer := packet.TransportLayer()
-	if transportLayer == nil {
-		return PacketInfo{}, fmt.Errorf("no transport layer found")
-	}
+// 	transportLayer := packet.TransportLayer()
+// 	if transportLayer == nil {
+// 		return PacketInfo{}, fmt.Errorf("no transport layer found")
+// 	}
 
-	return PacketInfo{
-		Timestamp:   packet.Metadata().Timestamp,
-		Source:      networkLayer.NetworkFlow().Src().String(),
-		Destination: networkLayer.NetworkFlow().Dst().String(),
-		Protocol:    transportLayer.LayerType().String(),
-		Port:        transportLayer.TransportFlow().Dst().String(),
-		Bytes:       len(packet.Data()),
-	}, nil
-}
+// 	return PacketInfo{
+// 		Timestamp:   packet.Metadata().Timestamp,
+// 		Source:      networkLayer.NetworkFlow().Src().String(),
+// 		Destination: networkLayer.NetworkFlow().Dst().String(),
+// 		Protocol:    transportLayer.LayerType().String(),
+// 		Port:        transportLayer.TransportFlow().Dst().String(),
+// 		Bytes:       len(packet.Data()),
+// 	}, nil
+// }

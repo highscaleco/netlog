@@ -48,7 +48,9 @@ and provides real-time insights into your network activity.`,
 				} else {
 					output = packet.String()
 				}
-				fmt.Println(output)
+				if output != "" {
+					fmt.Println(output)
+				}
 			}
 		}()
 

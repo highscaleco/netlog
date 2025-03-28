@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -21,7 +22,7 @@ var dynamicClient *dynamic.DynamicClient
 var ofipResource = schema.GroupVersionResource{
 	Group:    "kubeovn.io",
 	Version:  "v1",
-	Resource: "ofips",
+	Resource: "ovn-fips",
 }
 
 func CreateDynamicClient() *dynamic.DynamicClient {
@@ -54,10 +55,13 @@ func createConfig() (*rest.Config, error) {
 func GetOFIPByIPv4(ipv4 string) (string, error) {
 	clientset := CreateDynamicClient()
 	ofip, err := clientset.Resource(ofipResource).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: "ovn.kubernetes.io/eip_v4_ip" + ipv4,
+		LabelSelector: "ovn.kubernetes.io/eip_v4_ip=" + ipv4,
 	})
 	if err != nil {
 		return "", err
+	}
+	if len(ofip.Items) == 0 {
+		return "", fmt.Errorf("no ofip found for ipv4: %s", ipv4)
 	}
 	return ofip.Items[0].GetName(), nil
 }
