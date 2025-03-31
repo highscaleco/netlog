@@ -56,6 +56,7 @@ type AggregatedInfo struct {
 	Destination string
 	Protocol    string
 	Port        string
+	Direction   string
 	TotalBytes  int64
 	Packets     int64
 }
@@ -73,9 +74,11 @@ func (a AggregatedInfo) String() string {
 		if errSrc == nil && ofipSrc != nil && ofipSrc.Namespace != "" {
 			a.Namespace = ofipSrc.Namespace
 			a.Name = ofipSrc.Name
+			a.Direction = "egress"
 		} else if errDst == nil && ofipDst != nil && ofipDst.Namespace != "" {
 			a.Namespace = ofipDst.Namespace
 			a.Name = ofipDst.Name
+			a.Direction = "ingress"
 		}
 	}
 
@@ -85,8 +88,8 @@ func (a AggregatedInfo) String() string {
 	}
 
 	duration := a.EndTime.Sub(a.StartTime).Seconds()
-	return fmt.Sprintf("%s %s %s %s => %s %s %s %d bytes (%d packets in %.2fs)",
-		a.StartTime, a.Namespace, a.Name, a.Source, a.Destination, a.Protocol, a.Port, a.TotalBytes, a.Packets, duration)
+	return fmt.Sprintf("%s %s %s %s => %s %s %s %s %d bytes (%d packets in %.2fs)",
+		a.StartTime, a.Namespace, a.Name, a.Direction, a.Source, a.Destination, a.Protocol, a.Port, a.TotalBytes, a.Packets, duration)
 }
 
 // JSONString returns a JSON-like string representation of the aggregated info
@@ -102,9 +105,11 @@ func (a AggregatedInfo) JSONString() string {
 		if errSrc == nil && ofipSrc != nil && ofipSrc.Namespace != "" {
 			a.Namespace = ofipSrc.Namespace
 			a.Name = ofipSrc.Name
+			a.Direction = "egress"
 		} else if errDst == nil && ofipDst != nil && ofipDst.Namespace != "" {
 			a.Namespace = ofipDst.Namespace
 			a.Name = ofipDst.Name
+			a.Direction = "ingress"
 		}
 	}
 
@@ -123,6 +128,7 @@ func (a AggregatedInfo) JSONString() string {
 		Destination string `json:"destination"`
 		Protocol    string `json:"protocol"`
 		Port        string `json:"port"`
+		Direction   string `json:"direction"`
 		TotalBytes  int64  `json:"total_bytes"`
 		Packets     int64  `json:"packets"`
 	}{
@@ -134,6 +140,7 @@ func (a AggregatedInfo) JSONString() string {
 		Destination: a.Destination,
 		Protocol:    a.Protocol,
 		Port:        a.Port,
+		Direction:   a.Direction,
 		TotalBytes:  a.TotalBytes,
 		Packets:     a.Packets,
 	}
