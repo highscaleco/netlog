@@ -1,116 +1,118 @@
 # NetLog
 
-A lightweight network packet capture tool that monitors network traffic and provides real-time insights into your network activity.
+A network traffic monitoring tool for Kubernetes clusters that captures and logs network packets, providing detailed information about network connections between pods.
 
 ## Features
 
-- Real-time packet capture and monitoring
-- Smart packet aggregation for large transfers
-- Support for both text and JSON output formats
-- Automatic detection of public IP traffic
-- Dynamic window sizing based on transfer rates
-- Timestamp tracking for all captured packets
+- Captures network packets using libpcap
+- Identifies Kubernetes pods by IP address
+- Supports both TCP and UDP protocols
+- Provides real-time logging of network connections
+- JSON output format for easy parsing
+- Prometheus metrics for monitoring and alerting
+
+## Prerequisites
+
+- Go 1.21 or later
+- libpcap development files
+- Kubernetes cluster access
+- Redis (optional, for caching ovn-fip information)
 
 ## Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/highscaleco/netlog.git
-cd netlog
+### Building from Source
 
-# Build the project
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/netlog.git
+cd netlog
+```
+
+2. Install dependencies:
+```bash
+go mod download
+```
+
+3. Build the binary:
+```bash
 go build -o netlog cmd/netlog/main.go
+```
+
+### Installing libpcap
+
+On Ubuntu/Debian:
+```bash
+sudo apt-get install libpcap-dev
+```
+
+On macOS:
+```bash
+brew install libpcap
 ```
 
 ## Usage
 
 ### Basic Usage
 
+Run NetLog with default settings:
 ```bash
-# Run with default settings (captures on en1 interface)
 sudo ./netlog
-
-# Specify a different network interface
-sudo ./netlog --interface eth0
-
-# Output in JSON format
-sudo ./netlog --format json
 ```
 
 ### Command Line Arguments
 
-- `--interface`: Network interface to capture packets from (default: "en1")
-- `--format`: Output format (default: "text")
-  - `text`: Human-readable format
-  - `json`: JSON-like string format
+- `--interface`: Network interface to capture packets from (default: "eth0")
+- `--redis-addr`: Redis server address (default: "localhost:6379")
+- `--redis-password`: Redis password (optional)
+- `--redis-db`: Redis database number (default: 0)
+- `--json`: Enable JSON output format
+- `--metrics-addr`: Address to expose Prometheus metrics (default: ":9090")
 
-### Output Formats
+### Prometheus Metrics
 
-#### Text Format
+NetLog exposes the following Prometheus metrics at the `/metrics` endpoint:
+
+- `netlog_network_bytes_total`: Total bytes transferred
+  - Labels: namespace, name, source, destination, protocol, port, direction
+- `netlog_network_packets_total`: Total number of packets
+  - Labels: namespace, name, source, destination, protocol, port, direction
+- `netlog_network_connections_active`: Number of active connections
+  - Labels: namespace, name, source, destination, protocol, port
+- `netlog_network_connection_duration_seconds`: Duration of connections
+  - Labels: namespace, name, source, destination, protocol, port
+
+Example Prometheus queries:
+```promql
+# Total bytes transferred by namespace
+sum(netlog_network_bytes_total) by (namespace)
+
+# Active connections by pod
+sum(netlog_network_connections_active) by (namespace, name)
+
+# Average connection duration
+rate(netlog_network_connection_duration_seconds_sum[5m]) / rate(netlog_network_connection_duration_seconds_count[5m])
 ```
-[2024-03-23 12:34:56] 192.168.1.100 => 8.8.8.8 TCP 443 500000000 bytes (50000 packets in 5.00s)
+
+## Output Format
+
+### Text Output
+```
+[2024-02-14 12:34:56] namespace: default, name: nginx-7f9f9f9f9f, source: 10.244.1.2:80, destination: 10.244.2.3:443, protocol: TCP, bytes: 1234, packets: 10
 ```
 
-#### JSON Format
+### JSON Output
 ```json
-{"timestamp":"2024-03-23 12:34:56","duration":"5.00s","source":"192.168.1.100","destination":"8.8.8.8","protocol":"TCP","port":"443","total_bytes":500000000,"packets":50000}
+{
+  "timestamp": "2024-02-14T12:34:56Z",
+  "namespace": "default",
+  "name": "nginx-7f9f9f9f9f",
+  "source": "10.244.1.2:80",
+  "destination": "10.244.2.3:443",
+  "protocol": "TCP",
+  "bytes": 1234,
+  "packets": 10
+}
 ```
-
-## Smart Aggregation
-
-NetLog automatically adjusts its aggregation window based on transfer rates:
-
-- ≤ 1 MB/s: 1-second window
-- > 1 MB/s: 2-second window
-- > 10 MB/s: 3-second window
-- > 100 MB/s: 5-second window
-
-This helps reduce output noise while maintaining meaningful progress updates for large transfers.
-
-## Requirements
-
-- Go 1.22 or later
-- libpcap-dev (Linux) or libpcap (macOS)
-- Root/sudo privileges for packet capture
-
-### Linux Dependencies
-```bash
-sudo apt-get install libpcap-dev
-```
-
-### macOS Dependencies
-```bash
-brew install libpcap
-```
-
-## Development
-
-### Project Structure
-
-```
-netlog/
-├── cmd/
-│   └── netlog/
-│       └── main.go    # Main entry point
-├── pkg/
-│   ├── capture/      # Packet capture functionality
-│   └── types/        # Shared types
-└── README.md
-```
-
-### Building from Source
-
-```bash
-# Install dependencies
-go mod download
-
-# Build the project
-go build -o netlog cmd/netlog/main.go
-```
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contributing
 
@@ -120,7 +122,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## Acknowledgments
+## License
 
-- [gopacket](https://github.com/google/gopacket) for packet capture functionality
-- [libpcap](https://www.tcpdump.org/) for the underlying packet capture library
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

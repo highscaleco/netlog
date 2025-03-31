@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/highscaleco/netlog/pkg/capture"
+	"github.com/highscaleco/netlog/pkg/metrics"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +18,8 @@ var (
 	FormatFlag = "text"
 	// InterfaceFlag specifies the network interface to capture from
 	InterfaceFlag = "en1"
+	// MetricsAddr specifies the address to expose metrics on
+	MetricsAddr = ":9090"
 )
 
 var rootCmd = &cobra.Command{
@@ -23,6 +28,9 @@ var rootCmd = &cobra.Command{
 	Long: `NetLog is a lightweight network packet capture tool that monitors network traffic
 and provides real-time insights into your network activity.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Initialize metrics
+		metrics.Init()
+
 		// Create capture instance
 		capture := capture.NewCapture(InterfaceFlag)
 		if capture == nil {
@@ -34,6 +42,14 @@ and provides real-time insights into your network activity.`,
 		if err != nil {
 			return fmt.Errorf("failed to start capture: %v", err)
 		}
+
+		// Start metrics server
+		go func() {
+			http.Handle("/metrics", promhttp.Handler())
+			if err := http.ListenAndServe(MetricsAddr, nil); err != nil {
+				fmt.Printf("Error starting metrics server: %v\n", err)
+			}
+		}()
 
 		// Handle graceful shutdown
 		sigChan := make(chan os.Signal, 1)
@@ -51,6 +67,20 @@ and provides real-time insights into your network activity.`,
 				if output != "" {
 					fmt.Println(output)
 				}
+
+				// Update Prometheus metrics
+				metrics.UpdateMetrics(
+					packet.Namespace,
+					packet.Name,
+					packet.Source,
+					packet.Destination,
+					packet.Protocol,
+					packet.Port,
+					packet.Direction,
+					packet.TotalBytes,
+					packet.Packets,
+					packet.EndTime.Sub(packet.StartTime).Seconds(),
+				)
 			}
 		}()
 
@@ -65,6 +95,7 @@ and provides real-time insights into your network activity.`,
 func init() {
 	rootCmd.Flags().StringVarP(&FormatFlag, "format", "f", "text", "Output format (text or json)")
 	rootCmd.Flags().StringVarP(&InterfaceFlag, "interface", "i", "en1", "Network interface to capture from")
+	rootCmd.Flags().StringVarP(&MetricsAddr, "metrics-addr", "m", ":9090", "Address to expose metrics on")
 }
 
 func Execute() {

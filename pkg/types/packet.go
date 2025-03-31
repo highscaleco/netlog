@@ -74,11 +74,11 @@ func (a AggregatedInfo) String() string {
 		if errSrc == nil && ofipSrc != nil && ofipSrc.Namespace != "" {
 			a.Namespace = ofipSrc.Namespace
 			a.Name = ofipSrc.Name
-			a.Direction = "egress"
+			a.Direction = "outbound"
 		} else if errDst == nil && ofipDst != nil && ofipDst.Namespace != "" {
 			a.Namespace = ofipDst.Namespace
 			a.Name = ofipDst.Name
-			a.Direction = "ingress"
+			a.Direction = "inbound"
 		}
 	}
 
@@ -105,11 +105,11 @@ func (a AggregatedInfo) JSONString() string {
 		if errSrc == nil && ofipSrc != nil && ofipSrc.Namespace != "" {
 			a.Namespace = ofipSrc.Namespace
 			a.Name = ofipSrc.Name
-			a.Direction = "egress"
+			a.Direction = "outbound"
 		} else if errDst == nil && ofipDst != nil && ofipDst.Namespace != "" {
 			a.Namespace = ofipDst.Namespace
 			a.Name = ofipDst.Name
-			a.Direction = "ingress"
+			a.Direction = "inbound"
 		}
 	}
 
