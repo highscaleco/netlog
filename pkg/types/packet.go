@@ -63,25 +63,6 @@ type AggregatedInfo struct {
 
 // String returns a human-readable string representation of the aggregated info
 func (a AggregatedInfo) String() string {
-	ofipSrc, errSrc := GetNamespaceAndNameByIPv4(a.Source)
-	ofipDst, errDst := GetNamespaceAndNameByIPv4(a.Destination)
-
-	// Reset namespace and name only if both calls fail
-	if errSrc != nil && errDst != nil {
-		a.Namespace = ""
-		a.Name = ""
-	} else {
-		if errSrc == nil && ofipSrc != nil && ofipSrc.Namespace != "" {
-			a.Namespace = ofipSrc.Namespace
-			a.Name = ofipSrc.Name
-			a.Direction = "outbound"
-		} else if errDst == nil && ofipDst != nil && ofipDst.Namespace != "" {
-			a.Namespace = ofipDst.Namespace
-			a.Name = ofipDst.Name
-			a.Direction = "inbound"
-		}
-	}
-
 	// Return empty string if no namespace is found
 	if a.Namespace == "" {
 		return ""
@@ -94,25 +75,6 @@ func (a AggregatedInfo) String() string {
 
 // JSONString returns a JSON-like string representation of the aggregated info
 func (a AggregatedInfo) JSONString() string {
-	ofipSrc, errSrc := GetNamespaceAndNameByIPv4(a.Source)
-	ofipDst, errDst := GetNamespaceAndNameByIPv4(a.Destination)
-
-	// Reset namespace and name only if both calls fail
-	if errSrc != nil && errDst != nil {
-		a.Namespace = ""
-		a.Name = ""
-	} else {
-		if errSrc == nil && ofipSrc != nil && ofipSrc.Namespace != "" {
-			a.Namespace = ofipSrc.Namespace
-			a.Name = ofipSrc.Name
-			a.Direction = "outbound"
-		} else if errDst == nil && ofipDst != nil && ofipDst.Namespace != "" {
-			a.Namespace = ofipDst.Namespace
-			a.Name = ofipDst.Name
-			a.Direction = "inbound"
-		}
-	}
-
 	// Return empty string if no namespace is found
 	if a.Namespace == "" {
 		return ""

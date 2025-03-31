@@ -32,6 +32,9 @@ type AggregatedInfo struct {
 	Port        string
 	TotalBytes  int
 	PacketCount int
+	Namespace   string
+	Name        string
+	Direction   string
 }
 
 // Capture represents a packet capture session
@@ -131,6 +134,22 @@ func (c *Capture) Start() (chan types.AggregatedInfo, error) {
 				mu.Lock()
 				agg, exists := aggregation[key]
 				if !exists {
+					// Try to get namespace and name from source IP first
+					ofipSrc, errSrc := types.GetNamespaceAndNameByIPv4(ip.SrcIP.String())
+					ofipDst, errDst := types.GetNamespaceAndNameByIPv4(ip.DstIP.String())
+
+					// Set namespace, name, and direction based on which IP is in our cluster
+					var namespace, name, direction string
+					if errSrc == nil && ofipSrc != nil && ofipSrc.Namespace != "" {
+						namespace = ofipSrc.Namespace
+						name = ofipSrc.Name
+						direction = "outbound"
+					} else if errDst == nil && ofipDst != nil && ofipDst.Namespace != "" {
+						namespace = ofipDst.Namespace
+						name = ofipDst.Name
+						direction = "inbound"
+					}
+
 					agg = &types.AggregatedInfo{
 						StartTime:   packet.Metadata().Timestamp,
 						EndTime:     packet.Metadata().Timestamp,
@@ -138,6 +157,9 @@ func (c *Capture) Start() (chan types.AggregatedInfo, error) {
 						Destination: ip.DstIP.String(),
 						Protocol:    transportLayer.LayerType().String(),
 						Port:        transportLayer.TransportFlow().Src().String(),
+						Namespace:   namespace,
+						Name:        name,
+						Direction:   direction,
 					}
 					aggregation[key] = agg
 				} else {
