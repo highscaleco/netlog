@@ -69,18 +69,20 @@ and provides real-time insights into your network activity.`,
 				}
 
 				// Update Prometheus metrics
-				metrics.UpdateMetrics(
-					packet.Namespace,
-					packet.Name,
-					packet.Source,
-					packet.Destination,
-					packet.Protocol,
-					packet.Port,
-					packet.Direction,
-					packet.TotalBytes,
-					packet.Packets,
-					packet.EndTime.Sub(packet.StartTime).Seconds(),
-				)
+				if packet.Namespace != "" {
+					metrics.UpdateMetrics(
+						packet.Namespace,
+						packet.Name,
+						packet.Source,
+						packet.Destination,
+						packet.Protocol,
+						packet.Port,
+						packet.Direction,
+						packet.TotalBytes,
+						packet.Packets,
+						packet.EndTime.Sub(packet.StartTime).Seconds(),
+					)
+				}
 			}
 		}()
 
