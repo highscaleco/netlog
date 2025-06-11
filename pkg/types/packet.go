@@ -59,6 +59,7 @@ type AggregatedInfo struct {
 	Direction   string
 	TotalBytes  int64
 	Packets     int64
+	LastSeen    time.Time
 }
 
 // String returns a human-readable string representation of the aggregated info

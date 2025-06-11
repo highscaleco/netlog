@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/google/gopacket/pcap"
 	"github.com/highscaleco/netlog/pkg/capture"
 	"github.com/highscaleco/netlog/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -32,14 +35,22 @@ and provides real-time insights into your network activity.`,
 		metrics.Init()
 
 		// Create capture instance
-		capture := capture.NewCapture(InterfaceFlag)
+		capture := capture.NewCapture(
+			InterfaceFlag,
+			65536,             // bufferSize
+			true,              // promiscuous
+			pcap.BlockForever, // timeout
+			"tcp or udp",      // filter
+			65536,             // maxPacketSize
+			10000,             // maxConnections
+		)
 		if capture == nil {
 			return fmt.Errorf("failed to create capture instance")
 		}
 
 		// Start packet capture
-		packets, err := capture.Start()
-		if err != nil {
+		ctx := context.Background()
+		if err := capture.Start(ctx); err != nil {
 			return fmt.Errorf("failed to start capture: %v", err)
 		}
 
@@ -51,13 +62,28 @@ and provides real-time insights into your network activity.`,
 			}
 		}()
 
+		// Start metrics cleanup goroutine
+		go func() {
+			ticker := time.NewTicker(5 * time.Minute)
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					metrics.CleanupMetrics()
+				}
+			}
+		}()
+
 		// Handle graceful shutdown
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 		// Process packets
 		go func() {
-			for packet := range packets {
+			for packet := range capture.Packets() {
 				var output string
 				if FormatFlag == "json" {
 					output = packet.JSONString()
@@ -96,7 +122,7 @@ and provides real-time insights into your network activity.`,
 
 func init() {
 	rootCmd.Flags().StringVarP(&FormatFlag, "format", "f", "text", "Output format (text or json)")
-	rootCmd.Flags().StringVarP(&InterfaceFlag, "interface", "i", "en1", "Network interface to capture from")
+	rootCmd.Flags().StringVarP(&InterfaceFlag, "interface", "i", "eth0", "Network interface to capture from")
 	rootCmd.Flags().StringVarP(&MetricsAddr, "metrics-addr", "m", ":9090", "Address to expose metrics on")
 }
 
